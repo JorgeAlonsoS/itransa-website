@@ -1,0 +1,7 @@
+node_modules/
+.vercel
+*.log
+.DS_Store
+process_logo.js
+process_favicon.js
+server.js
