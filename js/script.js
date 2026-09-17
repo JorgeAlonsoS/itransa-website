@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (form) {
         const COMPANY_WHATSAPP = '573136572695';
-        const COMPANY_EMAIL = 'Itransa.contabilidad@gmail.com';
+        const COMPANY_EMAIL = 'itransa.ayacucho@gmail.com';
 
         // Extract form data as object
         const getFormData = () => {
