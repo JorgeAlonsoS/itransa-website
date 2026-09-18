@@ -62,7 +62,7 @@ function generateCorporateEmailHTML(data) {
       <td style="padding:26px 36px 10px 36px;">
         <p style="margin:0;font-size:14px;line-height:1.65;color:#475569;">
           Has recibido una nueva solicitud de cotización comercial desde
-          <a href="https://www.itransa.com.co" style="color:#162A76;text-decoration:none;font-weight:700;">www.itransa.com.co</a>.
+          <a href="https://itransa-website.vercel.app" style="color:#162A76;text-decoration:none;font-weight:700;">itransa-website.vercel.app</a>.
           A continuación los detalles de la solicitud:
         </p>
       </td>
@@ -163,7 +163,7 @@ function generateCorporateEmailHTML(data) {
           Aguachica, Cesar, Colombia<br>
           <span style="color:#cbd5e1;">+57 313 657 2695 &nbsp;·&nbsp; +57 321 218 5773</span><br>
           Correo generado automáticamente desde
-          <a href="https://www.itransa.com.co" style="color:#60a5fa;text-decoration:none;">www.itransa.com.co</a>
+          <a href="https://itransa-website.vercel.app" style="color:#60a5fa;text-decoration:none;">itransa-website.vercel.app</a>
         </p>
       </td>
     </tr>
