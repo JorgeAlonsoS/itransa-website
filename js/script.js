@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const waLink         = cleanPhone ? `https://wa.me/${cleanPhone.length === 10 ? '57' + cleanPhone : cleanPhone}` : 'No disponible';
 
             const payload = {
-                _subject:    `Nueva Solicitud de Cotización - ${companyDisplay ? companyDisplay.replace(/[\[\]]/g, '').trim() + ' - ' : ''}${data.name} - ${serviceName}`,
+                _subject:    `🚚 COTIZACIÓN${companyDisplay}: ${data.name} — ${serviceName}`,
                 _template:   'box',
                 _replyto:    data.email,
                 _autorespond:`¡Gracias por comunicarte con ITRANSA (Ingeniería y Transporte Ayacucho S.A.S.)!\n\nHemos recibido tu solicitud de cotización y nuestro equipo comercial se pondrá en contacto contigo a la brevedad.\n\nAtentamente,\nEquipo Comercial - ITRANSA S.A.S.`,
@@ -321,11 +321,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                     form.reset();
-                    // Ocultar mensaje después de 2 segundos
+                    // Auto-cerrar el mensaje luego de 4 segundos
                     setTimeout(() => {
-                        formStatus.className = 'form-status';
-                        formStatus.innerHTML = '';
-                    }, 2000);
+                        formStatus.style.transition = 'opacity 0.6s ease';
+                        formStatus.style.opacity = '0';
+                        setTimeout(() => {
+                            formStatus.className = 'form-status';
+                            formStatus.innerHTML = '';
+                            formStatus.style.opacity = '';
+                            formStatus.style.transition = '';
+                        }, 650);
+                    }, 4000);
                 } else if (result.message && (result.message.includes('Activation') || result.message.includes('actived'))) {
                     formStatus.className = 'form-status error';
                     formStatus.textContent = '⚠️ Debes activar el formulario: revisa el correo itransalogistica@gmail.com y haz clic en "Activate Form".';

@@ -1,9 +1,11 @@
 const nodemailer = require('nodemailer');
-const fs = require('fs');
-const path = require('path');
 
-// ------- Logo URL -------
-const LOGO_SRC = 'https://www.itransa.com.co/assets/images/logo/logo-light.png';
+// ------- Logo público (URL absoluta del sitio desplegado) -------
+// Usar URL pública garantiza visualización en todos los clientes de correo
+const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : 'https://itransa-website.vercel.app';
+const LOGO_SRC = `${SITE_URL}/assets/images/logo/logo-light.png`;
 
 // ------- Etiquetas de servicio -------
 const SERVICE_LABELS = {
@@ -14,6 +16,10 @@ const SERVICE_LABELS = {
 };
 
 const COMPANY_EMAIL = process.env.EMAIL_USER || 'itransalogistica@gmail.com';
+const PHONES = [
+    { number: '3136572695', display: '+57 313 657 2695' },
+    { number: '3212185773', display: '+57 321 218 5773' }
+];
 
 // ------- Generador de HTML corporativo -------
 function generateCorporateEmailHTML(data) {
@@ -25,9 +31,7 @@ function generateCorporateEmailHTML(data) {
     const ruta         = `${data.origin || 'No especificado'} → ${data.destination || 'No especificado'}`;
     const empresa      = data.company ? data.company.toUpperCase() : 'Particular / No especifica';
     const detalle      = data.message ? data.message.replace(/\n/g, '<br>') : 'Sin observaciones adicionales';
-    const logoTag      = LOGO_SRC
-        ? `<img src="${LOGO_SRC}" alt="ITRANSA" width="200" height="auto" style="display:block;margin:0 auto 14px auto;">`
-        : `<p style="margin:0 0 10px 0;font-size:26px;font-weight:900;color:#ffffff;letter-spacing:1px;">ITRANSA</p>`;
+    const logoTag = `<img src="${LOGO_SRC}" alt="ITRANSA - Ingeniería y Transporte Ayacucho" width="220" height="auto" style="display:block;margin:0 auto 14px auto;max-width:220px;">`;
 
     return `<!DOCTYPE html>
 <html lang="es">
@@ -156,7 +160,8 @@ function generateCorporateEmailHTML(data) {
       <td style="background-color:#0D1B50;padding:20px 36px;text-align:center;">
         <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.7;">
           <strong style="color:#e2e8f0;">ITRANSA · Ingeniería y Transporte Ayacucho S.A.S.</strong><br>
-          Aguachica, Cesar, Colombia &nbsp;·&nbsp; +57 313 657 2695<br>
+          Aguachica, Cesar, Colombia<br>
+          <span style="color:#cbd5e1;">+57 313 657 2695 &nbsp;·&nbsp; +57 321 218 5773</span><br>
           Correo generado automáticamente desde
           <a href="https://www.itransa.com.co" style="color:#60a5fa;text-decoration:none;">www.itransa.com.co</a>
         </p>
@@ -201,8 +206,9 @@ module.exports = async function handler(req, res) {
         });
 
         const serviceName    = SERVICE_LABELS[data.service] || data.service || 'Servicio';
-        const companyTag     = data.company ? `${data.company.toUpperCase()} - ` : '';
-        const subject        = `Nueva Solicitud de Cotización - ${companyTag}${data.name} - ${serviceName}`;
+        const companyTag     = data.company ? ` | ${data.company.toUpperCase()}` : '';
+        const dateTag        = data.date ? ` | ${data.date}` : '';
+        const subject        = `ITRANSA | Nueva Cotización${companyTag} | ${serviceName}${dateTag} | ${data.name}`;
 
         await transporter.sendMail({
             from:    `"ITRANSA Cotizaciones" <${COMPANY_EMAIL}>`,
