@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (form) {
         const COMPANY_WHATSAPP = '573136572695';
-        const COMPANY_EMAIL = 'itransa.ayacucho@gmail.com';
+        const COMPANY_EMAIL = 'itransalogistica@gmail.com';
 
         // Extract form data as object
         const getFormData = () => {
@@ -295,7 +295,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload)
             });
 
-            return response.ok;
+            if (!response.ok) {
+                return { success: false, message: 'Error en la respuesta del servidor' };
+            }
+
+            try {
+                const resData = await response.json();
+                const isSuccess = resData.success === true || resData.success === 'true';
+                return {
+                    success: isSuccess,
+                    message: resData.message || ''
+                };
+            } catch (err) {
+                return { success: false, message: 'Error parseando respuesta' };
+            }
         };
 
         // Main Submit Action (Direct Email Dispatch)
@@ -317,8 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
 
             try {
-                const ok = await sendEmailAJAX(data);
-                if (ok) {
+                const result = await sendEmailAJAX(data);
+                if (result.success) {
                     formStatus.className = 'form-status success';
                     formStatus.textContent = '✅ ¡Solicitud de cotización enviada exitosamente! Nos pondremos en contacto contigo a la brevedad.';
                     form.reset();
@@ -326,14 +339,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => {
                         formStatus.textContent = '';
                         formStatus.className = 'form-status';
-                    }, 2000);
+                    }, 5000);
+                } else if (result.message && (result.message.includes('Activation') || result.message.includes('actived'))) {
+                    formStatus.className = 'form-status error';
+                    formStatus.textContent = '⚠️ Se envió un correo de activación a itransalogistica@gmail.com. Por favor revisa tu correo y haz clic en "Activate Form" para comenzar a recibir las cotizaciones.';
                 } else {
-                    throw new Error('Servidor no respondió OK');
+                    throw new Error(result.message || 'Servidor no respondió OK');
                 }
             } catch (err) {
                 console.error('Error enviando formulario:', err);
                 formStatus.className = 'form-status error';
-                formStatus.textContent = 'Ocurrió un inconveniente al enviar la cotización por correo. Por favor inténtalo de nuevo o contáctanos directamente.';
+                formStatus.textContent = 'Ocurrió un inconveniente al enviar la cotización por correo. Por favor inténtalo de nuevo o contáctanos directamente por teléfono o WhatsApp.';
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
