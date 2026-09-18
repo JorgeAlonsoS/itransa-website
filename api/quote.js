@@ -2,15 +2,8 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 
-// ------- Logo incrustado en base64 (optimizado 320px) -------
-let LOGO_B64 = '';
-try {
-    const b64Path = path.join(__dirname, '_logo_b64.txt');
-    LOGO_B64 = fs.readFileSync(b64Path, 'utf8').trim();
-} catch (e) {
-    // Logo no disponible – se omite del correo
-}
-const LOGO_SRC = LOGO_B64 ? `data:image/png;base64,${LOGO_B64}` : '';
+// ------- Logo URL -------
+const LOGO_SRC = 'https://www.itransa.com.co/assets/images/logo/logo-light.png';
 
 // ------- Etiquetas de servicio -------
 const SERVICE_LABELS = {
@@ -208,8 +201,8 @@ module.exports = async function handler(req, res) {
         });
 
         const serviceName    = SERVICE_LABELS[data.service] || data.service || 'Servicio';
-        const companyTag     = data.company ? `[${data.company.toUpperCase()}] ` : '';
-        const subject        = `🚚 COTIZACIÓN: ${companyTag}${data.name} — ${serviceName}`;
+        const companyTag     = data.company ? `${data.company.toUpperCase()} - ` : '';
+        const subject        = `Nueva Solicitud de Cotización - ${companyTag}${data.name} - ${serviceName}`;
 
         await transporter.sendMail({
             from:    `"ITRANSA Cotizaciones" <${COMPANY_EMAIL}>`,

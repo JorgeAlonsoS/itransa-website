@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const waLink         = cleanPhone ? `https://wa.me/${cleanPhone.length === 10 ? '57' + cleanPhone : cleanPhone}` : 'No disponible';
 
             const payload = {
-                _subject:    `🚚 COTIZACIÓN${companyDisplay}: ${data.name} — ${serviceName}`,
+                _subject:    `Nueva Solicitud de Cotización - ${companyDisplay ? companyDisplay.replace(/[\[\]]/g, '').trim() + ' - ' : ''}${data.name} - ${serviceName}`,
                 _template:   'box',
                 _replyto:    data.email,
                 _autorespond:`¡Gracias por comunicarte con ITRANSA (Ingeniería y Transporte Ayacucho S.A.S.)!\n\nHemos recibido tu solicitud de cotización y nuestro equipo comercial se pondrá en contacto contigo a la brevedad.\n\nAtentamente,\nEquipo Comercial - ITRANSA S.A.S.`,
@@ -317,10 +317,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="form-status-msg">✅ ¡Cotización enviada exitosamente!</div>
                         <div class="form-status-submsg">
                             Hemos recibido tu solicitud. Nuestro equipo comercial se pondrá en contacto contigo a la brevedad.<br>
-                            Para atención inmediata llámanos al <strong>313 657 2695</strong>.
+                            Para atención inmediata llámanos al <strong>313 657 2695</strong> o <strong>321 218 5773</strong>.
                         </div>
                     `;
                     form.reset();
+                    // Ocultar mensaje después de 2 segundos
+                    setTimeout(() => {
+                        formStatus.className = 'form-status';
+                        formStatus.innerHTML = '';
+                    }, 2000);
                 } else if (result.message && (result.message.includes('Activation') || result.message.includes('actived'))) {
                     formStatus.className = 'form-status error';
                     formStatus.textContent = '⚠️ Debes activar el formulario: revisa el correo itransalogistica@gmail.com y haz clic en "Activate Form".';
