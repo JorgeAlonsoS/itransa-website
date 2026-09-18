@@ -166,13 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================================================
-       Form Validation & Dual Dispatch (Email + WhatsApp)
+       Form Validation & Email Dispatch
        ========================================================================== */
     const form = document.getElementById('quote-form');
     const formStatus = document.getElementById('form-status');
 
     if (form) {
-        const COMPANY_WHATSAPP = '573136572695';
         const COMPANY_EMAIL = 'itransalogistica@gmail.com';
 
         // Extract form data as object
@@ -229,120 +228,69 @@ document.addEventListener('DOMContentLoaded', () => {
             return isValid;
         };
 
-        // Build structured WhatsApp message with Markdown formatting
-        const buildWhatsAppMessage = (data) => {
-            const serviceLabels = {
-                'pasajeros': 'Transporte de Pasajeros',
-                'carga': 'Transporte de Carga por Carretera',
-                'maquinaria': 'Alquiler de Maquinaria y Equipo',
-                'otro': 'Otro Servicio'
-            };
-
-            const serviceName = serviceLabels[data.service] || data.service || 'No especificado';
-
-            let waText = `🚚 *NUEVA SOLICITUD DE COTIZACIÓN - ITRANSA*\n\n`;
-            waText += `👤 *Nombre:* ${data.name}\n`;
-            if (data.company) waText += `🏢 *Empresa:* ${data.company}\n`;
-            waText += `📞 *Teléfono:* ${data.phone}\n`;
-            waText += `✉️ *Correo:* ${data.email}\n`;
-            waText += `🛠️ *Servicio:* ${serviceName}\n`;
-            if (data.origin) waText += `📍 *Origen:* ${data.origin}\n`;
-            if (data.destination) waText += `🏁 *Destino:* ${data.destination}\n`;
-            if (data.date) waText += `📅 *Fecha Estimada:* ${data.date}\n`;
-            if (data.message) waText += `📝 *Detalles:* ${data.message}\n`;
-            waText += `\n_Solicitado desde la web www.itransa.com.co_`;
-
-            return encodeURIComponent(waText);
-        };
-
-        // Open WhatsApp chat in new tab
-        const openWhatsApp = (data) => {
-            const encodedText = buildWhatsAppMessage(data);
-            const waUrl = `https://wa.me/${COMPANY_WHATSAPP}?text=${encodedText}`;
-            window.open(waUrl, '_blank');
-        };
-
-        // Send Email: Try Serverless API first (Corporate HTML), fallback to FormSubmit
-        const sendEmailAJAX = async (data) => {
-            const serviceLabels = {
+        // ── Envío de correo: primero API corporativa, fallback FormSubmit ──
+        const sendEmail = async (data) => {
+            const SERVICE_LABELS = {
                 'pasajeros': 'Transporte de Pasajeros (CIIU 4921)',
-                'carga': 'Transporte de Carga por Carretera (CIIU 4923)',
-                'maquinaria': 'Alquiler de Maquinaria y Equipo (CIIU 7730)',
-                'otro': 'Otro Servicio'
+                'carga':     'Transporte de Carga por Carretera (CIIU 4923)',
+                'maquinaria':'Alquiler de Maquinaria y Equipo (CIIU 7730)',
+                'otro':      'Otro Servicio'
             };
 
-            // 1. Try local/Vercel Corporate API endpoint
+            // 1. Intentar API propia (Vercel serverless / local)
             try {
                 const apiRes = await fetch('/api/quote', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(data)
                 });
-
                 if (apiRes.ok) {
                     const apiData = await apiRes.json();
-                    if (apiData.success) {
-                        return { success: true, via: 'corporate-api' };
-                    }
+                    if (apiData.success) return { success: true };
+                    if (!apiData.fallback) throw new Error(apiData.message || 'Error en API');
+                    // Si fallback === true, sigue al paso 2
                 }
-            } catch (err) {
-                // Ignore and proceed to FormSubmit fallback
+            } catch (_) {
+                // Red / 404 local → continuar al fallback
             }
 
-            // 2. High-reliability fallback via FormSubmit
-            const cleanPhone = data.phone.replace(/\D/g, '');
-            const waNumber = cleanPhone.length === 10 ? `57${cleanPhone}` : cleanPhone;
-            const waLink = cleanPhone ? `https://wa.me/${waNumber}` : 'No disponible';
-            const serviceName = serviceLabels[data.service] || data.service || 'Servicio General';
+            // 2. Fallback: FormSubmit AJAX
+            const serviceName    = SERVICE_LABELS[data.service] || data.service || 'Servicio General';
             const companyDisplay = data.company ? ` [${data.company.toUpperCase()}]` : '';
+            const cleanPhone     = data.phone.replace(/\D/g, '');
+            const waLink         = cleanPhone ? `https://wa.me/${cleanPhone.length === 10 ? '57' + cleanPhone : cleanPhone}` : 'No disponible';
 
             const payload = {
-                _subject: `🚚 COTIZACIÓN${companyDisplay}: ${data.name} - ${serviceName}`,
-                _template: 'box',
-                _replyto: data.email,
-                _autorespond: `¡Gracias por comunicarte con ITRANSA (Ingeniería y Transporte Ayacucho S.A.S.)!\n\nHemos recibido tu solicitud de cotización exitosamente y nuestro equipo comercial revisará tus requerimientos para ponerse en contacto contigo a la brevedad.\n\nSi requieres atención inmediata, puedes comunicarte directamente a la línea de atención +57 3136572695.\n\nAtentamente,\nEquipo Comercial - ITRANSA S.A.S.`,
-                '🏢 Empresa': data.company || 'Particular / No especifica',
-                '👤 Solicitante': data.name,
-                '📞 Teléfono': data.phone,
-                '💬 WhatsApp Directo del Cliente': waLink,
-                '✉️ Correo Electrónico': data.email,
-                '🛠️ Servicio Solicitado': serviceName,
-                '📍 Origen': data.origin || 'No especificado',
-                '🏁 Destino': data.destination || 'No especificado',
-                '📅 Fecha Estimada': data.date || 'No especificada',
-                '📝 Detalles del Requerimiento': data.message || 'Sin observaciones adicionales'
+                _subject:    `🚚 COTIZACIÓN${companyDisplay}: ${data.name} — ${serviceName}`,
+                _template:   'box',
+                _replyto:    data.email,
+                _autorespond:`¡Gracias por comunicarte con ITRANSA (Ingeniería y Transporte Ayacucho S.A.S.)!\n\nHemos recibido tu solicitud de cotización y nuestro equipo comercial se pondrá en contacto contigo a la brevedad.\n\nAtentamente,\nEquipo Comercial - ITRANSA S.A.S.`,
+                '🏢 Empresa':              data.company || 'Particular / No especifica',
+                '👤 Solicitante':          data.name,
+                '📞 Teléfono':             data.phone,
+                '💬 WhatsApp del Cliente': waLink,
+                '✉️ Correo':               data.email,
+                '🛠️ Servicio':             serviceName,
+                '📍 Origen':               data.origin  || 'No especificado',
+                '🏁 Destino':              data.destination || 'No especificado',
+                '📅 Fecha Estimada':       data.date    || 'No especificada',
+                '📝 Observaciones':        data.message || 'Sin observaciones adicionales'
             };
 
-            const response = await fetch(`https://formsubmit.co/ajax/${COMPANY_EMAIL}`, {
+            const resp = await fetch(`https://formsubmit.co/ajax/${COMPANY_EMAIL}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                return { success: false, message: 'Error en la respuesta del servidor' };
-            }
+            if (!resp.ok) return { success: false, message: 'Error del servidor' };
 
-            try {
-                const resData = await response.json();
-                const isSuccess = resData.success === true || resData.success === 'true';
-                return {
-                    success: isSuccess,
-                    via: 'formsubmit',
-                    message: resData.message || ''
-                };
-            } catch (err) {
-                return { success: false, message: 'Error parseando respuesta' };
-            }
+            const resData = await resp.json();
+            const ok      = resData.success === true || resData.success === 'true';
+            return { success: ok, message: resData.message || '' };
         };
 
-        // Main Submit Action: Dual Dispatch (Email + WhatsApp Immediate Notification)
+        // ── Enviar formulario (solo correo) ──
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -352,48 +300,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const data = getFormData();
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
+            const data       = getFormData();
+            const submitBtn  = form.querySelector('button[type="submit"]');
+            const origText   = submitBtn.innerHTML;
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i data-lucide="loader" class="icon-small spin"></i> Procesando cotización...';
+            submitBtn.innerHTML = '<i data-lucide="loader" class="icon-small spin"></i> Enviando cotización...';
             if (window.lucide) lucide.createIcons();
 
             try {
-                const result = await sendEmailAJAX(data);
-                if (result.success) {
-                    // Open WhatsApp automatically for instant dual reception
-                    const waUrl = `https://wa.me/${COMPANY_WHATSAPP}?text=${buildWhatsAppMessage(data)}`;
-                    try {
-                        window.open(waUrl, '_blank');
-                    } catch (waErr) {
-                        console.warn('Popup blocked, WhatsApp link provided in status card');
-                    }
+                const result = await sendEmail(data);
 
+                if (result.success) {
                     formStatus.className = 'form-status success';
                     formStatus.innerHTML = `
-                        <div class="form-status-msg">✅ ¡Solicitud de cotización enviada con éxito!</div>
-                        <div class="form-status-submsg">Hemos recibido tus datos por correo electrónico. Para recibir atención comercial inmediata, continúa en WhatsApp:</div>
-                        <a href="${waUrl}" target="_blank" class="form-status-wa-btn">
-                            <i data-lucide="message-circle" class="icon-small"></i> Abrir Chat en WhatsApp con un Asesor
-                        </a>
+                        <div class="form-status-msg">✅ ¡Cotización enviada exitosamente!</div>
+                        <div class="form-status-submsg">
+                            Hemos recibido tu solicitud. Nuestro equipo comercial se pondrá en contacto contigo a la brevedad.<br>
+                            Para atención inmediata llámanos al <strong>313 657 2695</strong>.
+                        </div>
                     `;
                     form.reset();
-                    if (window.lucide) lucide.createIcons();
                 } else if (result.message && (result.message.includes('Activation') || result.message.includes('actived'))) {
                     formStatus.className = 'form-status error';
-                    formStatus.textContent = '⚠️ Se envió un correo de activación a itransalogistica@gmail.com. Por favor revisa tu correo y haz clic en "Activate Form" para comenzar a recibir las cotizaciones.';
+                    formStatus.textContent = '⚠️ Debes activar el formulario: revisa el correo itransalogistica@gmail.com y haz clic en "Activate Form".';
                 } else {
-                    throw new Error(result.message || 'Servidor no respondió OK');
+                    throw new Error(result.message || 'No se pudo enviar la cotización');
                 }
             } catch (err) {
                 console.error('Error enviando formulario:', err);
                 formStatus.className = 'form-status error';
-                formStatus.textContent = 'Ocurrió un inconveniente al enviar la cotización por correo. Por favor inténtalo de nuevo o contáctanos directamente por teléfono o WhatsApp.';
+                formStatus.textContent = 'Ocurrió un inconveniente al enviar. Por favor inténtalo de nuevo o contáctanos directamente al 313 657 2695.';
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+                submitBtn.innerHTML = origText;
                 if (window.lucide) lucide.createIcons();
             }
         });
