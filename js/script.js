@@ -174,6 +174,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form) {
         const COMPANY_EMAIL = 'itransalogistica@gmail.com';
 
+        // Bloquear fechas pasadas en el campo de fecha estimada
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm   = String(today.getMonth() + 1).padStart(2, '0');
+            const dd   = String(today.getDate()).padStart(2, '0');
+            dateInput.min = `${yyyy}-${mm}-${dd}`;
+        }
+
         // Extract form data as object
         const getFormData = () => {
             return {
